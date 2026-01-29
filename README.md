@@ -34,17 +34,9 @@
 
 ## Screenshots
 
-<!-- Replace these with actual screenshots of your deployment -->
-
-| Light Mode | Dark Mode |
-|:---:|:---:|
-| ![Light Mode](docs/screenshots/light.png) | ![Dark Mode](docs/screenshots/dark.png) |
-
-| Mobile | PWA Install |
-|:---:|:---:|
-| ![Mobile](docs/screenshots/mobile.png) | ![PWA](docs/screenshots/pwa-install.png) |
-
-> To add screenshots: create `docs/screenshots/` and place your images there.
+| Light Mode | Dark Mode | Mobile |
+|:---:|:---:|:---:|
+| ![Light Mode](docs/screenshots/light.png) | ![Dark Mode](docs/screenshots/dark.png) | ![Mobile](docs/screenshots/mobile.png) |
 
 ---
 
