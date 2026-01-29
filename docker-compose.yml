@@ -1,0 +1,78 @@
+# WHY docker-compose: Single command to launch all 4 services with correct
+# networking, dependency ordering, and shared volumes. Developers run
+# `docker compose up` instead of managing 4 separate containers.
+
+services:
+  # WHY redis first: Both api (job enqueue) and worker (job dequeue) depend
+  # on Redis as the job queue backend via RQ (Redis Queue).
+  redis:
+    image: redis:7-alpine
+    # WHY alpine variant: ~30MB vs ~130MB for full image. Redis needs no
+    # extra OS packages, so alpine is ideal.
+    ports:
+      - "6379:6379"
+    # WHY healthcheck: Ensures dependent services only start when Redis
+    # is actually accepting connections, not just when the container starts.
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    # WHY shared data volume: SQLite database and downloaded audio files
+    # must be accessible by both api (creates jobs, serves results) and
+    # worker (downloads audio, writes transcriptions).
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    # WHY override CMD: Same image as api but runs the RQ worker process
+    # instead of the FastAPI server. Shares code, deps, and config.
+    command: python run_worker.py
+    depends_on:
+      redis:
+        condition: service_healthy
+      api:
+        # WHY depends on api: Ensures database is initialized (api creates
+        # tables on startup) before worker tries to update job records.
+        condition: service_started
+    env_file:
+      - .env
+    volumes:
+      - ./data:/data
+    # WHY: GPU config commented out - uncomment if NVIDIA GPU available.
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
