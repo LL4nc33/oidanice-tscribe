@@ -278,4 +278,4 @@ The visual output is identical -- kindle-ui extracts and formalizes what TScribe
 
 ## License
 
-MIT
+AGPL-3.0
