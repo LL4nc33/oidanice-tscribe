@@ -15,9 +15,10 @@ import logging
 import sys
 
 from redis import Redis
-from rq import Queue, Worker
+from rq import Queue
 
 from app.config import settings
+from app.worker.shutdown import GracefulWorker
 
 # WHY: Configure logging before anything else so worker startup
 # messages and job processing logs are visible.
@@ -47,7 +48,21 @@ def main() -> None:
         settings.whisper_compute_type,
     )
 
-    worker = Worker([queue], connection=redis_conn, name="tscribe-worker")
+    # WHY: GracefulWorker subclasses RQ's Worker to hook into SIGTERM handling.
+    # On SIGTERM it sets a shutdown flag that the transcription loop checks
+    # between segments, causing the job to fail cleanly instead of being
+    # SIGKILL'd by Docker after the grace period expires.
+    worker = GracefulWorker([queue], connection=redis_conn, name="tscribe-worker")
+
+    # WHY: If the previous worker was killed (SIGKILL, OOM, power loss), its
+    # registration key remains in Redis causing "active worker already exists".
+    # Clean up the stale key before registering. Safe because this container
+    # is the only worker instance (single-replica Docker service).
+    stale_key = f"rq:worker:{worker.name}"
+    if redis_conn.exists(stale_key):
+        logger.warning("Cleaning up stale worker key: %s", stale_key)
+        redis_conn.delete(stale_key)
+
     worker.work(with_scheduler=False)
 
 

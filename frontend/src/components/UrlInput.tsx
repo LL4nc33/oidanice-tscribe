@@ -95,44 +95,43 @@ export function UrlInput({ onSubmit }: UrlInputProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="flex gap-3">
-        {/* WHY: Full-width input with serif font matches the Kindle aesthetic. */}
-        <input
-          ref={inputRef}
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="Paste video or audio URL..."
-          className="flex-1 px-4 py-2 font-serif text-base outline-none"
-          style={inputStyle}
-          disabled={submitting}
-          required
-        />
+      {/* WHY: Vertical stack - input full-width, button full-width below.
+          This gives the form a clean, spacious feel on all screen sizes. */}
+      <input
+        ref={inputRef}
+        type="url"
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+        placeholder="Paste video or audio URL..."
+        className="w-full px-4 py-2 font-serif text-base leading-relaxed outline-none"
+        style={inputStyle}
+        disabled={submitting}
+        required
+      />
 
-        <button
-          type="submit"
-          disabled={submitting || !url.trim()}
-          className="px-6 py-2 font-serif text-base transition-opacity disabled:opacity-40"
-          style={{
-            border: '1px solid var(--border)',
-            backgroundColor: 'var(--text)',
-            color: 'var(--bg)',
-          }}
-        >
-          {submitting ? 'Sending...' : 'Transcribe'}
-        </button>
-      </div>
+      <button
+        type="submit"
+        disabled={submitting || !url.trim()}
+        className="w-full py-2 font-serif text-base transition-opacity disabled:opacity-40"
+        style={{
+          border: '1px solid var(--border)',
+          backgroundColor: 'var(--text)',
+          color: 'var(--bg)',
+        }}
+      >
+        {submitting ? 'Sending...' : 'Transcribe'}
+      </button>
 
       {/* WHY: Language select is secondary - smaller and below the main input.
           Most users will use auto-detect. */}
       <div className="flex items-center gap-3">
-        <label className="font-serif text-sm" style={{ color: 'var(--text-secondary)' }}>
+        <label className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>
           Language:
         </label>
         <select
           value={language}
           onChange={(e) => setLanguage(e.target.value)}
-          className="px-2 py-1 font-serif text-sm outline-none"
+          className="px-2 py-1 font-mono text-xs outline-none"
           style={inputStyle}
           disabled={submitting}
         >

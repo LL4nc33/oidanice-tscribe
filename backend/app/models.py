@@ -68,6 +68,10 @@ class Job(Base):
     # WHY: Store error message for failed jobs so the user knows what went wrong.
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # WHY: Tracks whether the transcript came from existing subtitles (fast path)
+    # or Whisper transcription (slow path). None for jobs created before this field.
+    source: Mapped[str | None] = mapped_column(String(20), nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

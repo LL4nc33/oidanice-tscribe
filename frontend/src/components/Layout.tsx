@@ -22,26 +22,23 @@ export function Layout({ children }: LayoutProps) {
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
       {/* WHY: Header uses a thin bottom border for clean Kindle-style separation. */}
       <header
-        className="px-6 py-4 flex items-center justify-between"
+        className="px-6 py-6 flex items-center justify-between"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
-        <h1 className="font-serif text-2xl tracking-wide">
+        <h1 className="font-serif text-2xl font-light tracking-wider leading-tight">
           TScribe
         </h1>
 
-        {/* WHY: Text-based sun/moon toggle avoids icon dependencies.
-            ASCII characters give the e-reader feel. */}
+        {/* WHY: Unicode sun/moon toggle — no icon dependencies, no borders.
+            Bare symbol keeps the monochrome e-reader aesthetic. */}
         <button
           onClick={toggleDark}
-          className="font-serif text-sm px-3 py-1 transition-colors"
-          style={{
-            border: '1px solid var(--border)',
-            backgroundColor: 'var(--bg)',
-            color: 'var(--text)',
-          }}
-          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          className="text-lg transition-transform duration-150 hover:scale-110"
+          style={{ color: 'var(--text)', background: 'none', border: 'none' }}
+          aria-label="Toggle dark mode"
+          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
-          {isDark ? '[ sun ]' : '[ moon ]'}
+          {isDark ? '☀' : '☽'}
         </button>
       </header>
 
@@ -50,15 +47,35 @@ export function Layout({ children }: LayoutProps) {
         {children}
       </main>
 
-      {/* WHY: Footer with thin top border mirrors the header for symmetry. */}
+      {/* WHY: Footer with thin top border mirrors the header for symmetry.
+          Powered-by style credits the tech stack and links to the repo. */}
       <footer
-        className="px-6 py-3 text-center font-serif text-sm"
+        className="px-6 py-3 text-center font-mono text-xs flex items-center justify-center gap-1"
         style={{
           borderTop: '1px solid var(--border)',
           color: 'var(--text-secondary)',
         }}
       >
-        OidaNice
+        <span>powered by faster-whisper</span>
+        <span style={{ opacity: 0.4 }}>·</span>
+        <span>built by</span>
+        <a
+          href="https://github.com/LL4nc33/oidanice-tscribe"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-kindle"
+          style={{
+            display: 'inline',
+            border: 'none',
+            padding: 0,
+            textDecoration: 'underline',
+            textUnderlineOffset: '2px',
+          }}
+        >
+          OidaNice
+        </a>
+        <span style={{ opacity: 0.4 }}>·</span>
+        <span>v0.0.4</span>
       </footer>
     </div>
   )

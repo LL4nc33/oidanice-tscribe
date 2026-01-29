@@ -28,6 +28,26 @@ body {
   transition: background-color 0.2s, color 0.2s;
 }
 
+/* WHY: Download button styles use CSS variables so hover effects
+   work with the monochrome theme without JS event handlers. */
+.btn-kindle {
+  background-color: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  transition: background-color 0.15s, color 0.15s, transform 0.1s;
+}
+.btn-kindle:hover {
+  background-color: var(--text);
+  color: var(--bg);
+}
+.btn-kindle:active {
+  transform: scale(0.95);
+}
+.btn-kindle:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
 /* WHY: Scrollbar styling to match the monochrome theme. */
 ::-webkit-scrollbar {
   width: 6px;
@@ -39,4 +59,11 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: var(--text-secondary);
+}
+
+/* WHY: Pulse animation for active job status indicators (downloading/transcribing).
+   Subtle opacity fade signals ongoing activity without color. */
+@keyframes pulse-opacity {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }

@@ -23,7 +23,7 @@ export function TranscriptView({ text }: TranscriptViewProps) {
     try {
       await navigator.clipboard.writeText(text)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setTimeout(() => setCopied(false), 3000)
     } catch {
       // WHY: Fallback for older browsers or restricted contexts.
       const textarea = document.createElement('textarea')
@@ -33,7 +33,7 @@ export function TranscriptView({ text }: TranscriptViewProps) {
       document.execCommand('copy')
       document.body.removeChild(textarea)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setTimeout(() => setCopied(false), 3000)
     }
   }
 
@@ -42,7 +42,7 @@ export function TranscriptView({ text }: TranscriptViewProps) {
       {/* WHY: Header row with label and copy button for quick access. */}
       <div className="flex items-center justify-between">
         <h3
-          className="font-serif text-sm uppercase tracking-widest"
+          className="font-mono text-xs uppercase tracking-[0.2em] leading-tight"
           style={{ color: 'var(--text-secondary)' }}
         >
           Transcript
@@ -50,14 +50,13 @@ export function TranscriptView({ text }: TranscriptViewProps) {
 
         <button
           onClick={handleCopy}
-          className="font-mono text-xs px-3 py-1 transition-colors"
-          style={{
-            border: '1px solid var(--border)',
-            backgroundColor: copied ? 'var(--text)' : 'var(--bg)',
-            color: copied ? 'var(--bg)' : 'var(--text)',
-          }}
+          className="btn-kindle font-mono text-xs px-3 py-1"
+          style={copied ? {
+            backgroundColor: 'var(--text)',
+            color: 'var(--bg)',
+          } : undefined}
         >
-          {copied ? 'Copied' : 'Copy'}
+          {copied ? 'copied \u2713' : 'copy'}
         </button>
       </div>
 
@@ -65,7 +64,7 @@ export function TranscriptView({ text }: TranscriptViewProps) {
           that doesn't dominate the page. Border gives it a "text frame" feel
           like a Kindle reading pane. */}
       <div
-        className="max-h-96 overflow-y-auto p-4"
+        className="max-h-[60vh] overflow-y-auto p-4"
         style={{
           border: '1px solid var(--border)',
           backgroundColor: 'var(--bg-secondary)',

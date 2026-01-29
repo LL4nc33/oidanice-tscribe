@@ -55,8 +55,7 @@ Data flows: User submits URL via frontend. API creates a job in SQLite and enque
 | GET    | `/api/jobs`          | List all jobs                  |
 | GET    | `/api/jobs/{id}`     | Get job status and result      |
 | DELETE | `/api/jobs/{id}`     | Delete a job                   |
-| GET    | `/api/jobs/{id}/srt` | Download SRT subtitle file     |
-| GET    | `/api/jobs/{id}/vtt` | Download VTT subtitle file     |
+| GET    | `/api/jobs/{id}/download/{fmt}` | Download transcript (srt, vtt, txt, json) |
 | GET    | `/api/health`        | Health check                   |
 
 ## Development Setup

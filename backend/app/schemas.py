@@ -43,6 +43,7 @@ class JobResponse(BaseModel):
     progress: int = 0
     result_text: str | None = None
     error: str | None = None
+    source: str | None = None
     created_at: datetime
     completed_at: datetime | None = None
 
@@ -61,6 +62,7 @@ class JobListResponse(BaseModel):
     status: JobStatus
     title: str | None = None
     progress: int = 0
+    source: str | None = None
     created_at: datetime
     completed_at: datetime | None = None
 

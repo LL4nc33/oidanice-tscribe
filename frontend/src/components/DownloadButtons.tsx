@@ -28,7 +28,7 @@ export function DownloadButtons({ jobId }: DownloadButtonsProps) {
   return (
     <div className="space-y-2">
       <h3
-        className="font-serif text-sm uppercase tracking-widest"
+        className="font-mono text-xs uppercase tracking-[0.2em] leading-tight"
         style={{ color: 'var(--text-secondary)' }}
       >
         Download
@@ -40,21 +40,10 @@ export function DownloadButtons({ jobId }: DownloadButtonsProps) {
             key={format.value}
             href={getDownloadUrl(jobId, format.value)}
             download
-            className="font-mono text-xs px-4 py-2 transition-colors inline-block text-center"
+            className="btn-kindle font-mono text-xs px-5 py-2.5 inline-block text-center"
             style={{
-              border: '1px solid var(--border)',
-              backgroundColor: 'var(--bg)',
-              color: 'var(--text)',
               textDecoration: 'none',
               minWidth: '60px',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--text)'
-              e.currentTarget.style.color = 'var(--bg)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--bg)'
-              e.currentTarget.style.color = 'var(--text)'
             }}
           >
             {format.label}

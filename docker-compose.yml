@@ -9,8 +9,6 @@ services:
     image: redis:7-alpine
     # WHY alpine variant: ~30MB vs ~130MB for full image. Redis needs no
     # extra OS packages, so alpine is ideal.
-    ports:
-      - "6379:6379"
     # WHY healthcheck: Ensures dependent services only start when Redis
     # is actually accepting connections, not just when the container starts.
     healthcheck:
@@ -36,6 +34,15 @@ services:
     # worker (downloads audio, writes transcriptions).
     volumes:
       - ./data:/data
+    # WHY healthcheck: Detects when the FastAPI server is stuck or
+    # unresponsive. Uses Python urllib because curl is not installed
+    # in python:3.12-slim.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     restart: unless-stopped
 
   worker:
@@ -51,11 +58,26 @@ services:
       api:
         # WHY depends on api: Ensures database is initialized (api creates
         # tables on startup) before worker tries to update job records.
-        condition: service_started
+        condition: service_healthy
     env_file:
       - .env
     volumes:
       - ./data:/data
+    # WHY healthcheck: Verifies the RQ worker process is alive and Redis
+    # is reachable. Uses Python to check Redis connectivity since the
+    # worker has no HTTP endpoint to probe.
+    healthcheck:
+      test: ["CMD", "python", "-c", "from redis import Redis; from app.config import settings; Redis.from_url(settings.redis_url).ping()"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    # WHY: Transcription of one segment can take up to ~30s on CPU. After
+    # SIGTERM sets the shutdown flag, the worker needs to finish the current
+    # segment, mark the job as FAILED in SQLite, and exit. 60s is generous
+    # enough for slow hardware but not so long that deploys feel stuck.
+    # (Docker default is 10s, which is too short for transcription cleanup.)
+    stop_grace_period: 60s
     # WHY: GPU config commented out - uncomment if NVIDIA GPU available.
     # deploy:
     #   resources:
@@ -74,5 +96,13 @@ services:
       - "3001:3000"
     depends_on:
       api:
-        condition: service_started
+        condition: service_healthy
+    # WHY healthcheck: Detects when nginx is unresponsive. Uses wget
+    # because it is available in nginx:alpine by default (curl is not).
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
     restart: unless-stopped

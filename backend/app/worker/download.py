@@ -1,9 +1,10 @@
 """Audio extraction from URLs via yt-dlp.
 
 WHY: yt-dlp is the most actively maintained YouTube/media downloader,
-supporting 1000+ sites. We extract audio-only as WAV because:
+supporting 1000+ sites. We extract audio-only in its native format because:
 - Audio-only saves bandwidth (no video data transferred)
-- WAV provides uncompressed audio for best Whisper transcription quality
+- Native format avoids slow re-encoding to WAV (~600MB/hr of uncompressed audio)
+- faster-whisper decodes any FFmpeg-supported format natively, so WAV buys nothing
 - yt-dlp handles all the site-specific extraction logic we'd never want to write
 """
 
@@ -30,41 +31,32 @@ class DownloadResult:
 
 
 def extract_audio(url: str, job_id: str) -> DownloadResult:
-    """Download audio-only from a URL and convert to WAV.
+    """Download audio-only from a URL in its native compressed format.
 
     WHY: Separating download from transcription allows us to update job status
     between phases and gives clearer error messages (download failed vs
-    transcription failed). WAV output ensures Whisper gets clean input.
+    transcription failed).
 
     Args:
         url: Media URL (YouTube, etc.) to extract audio from.
         job_id: Unique job identifier used as subdirectory name.
 
     Returns:
-        DownloadResult with path to WAV file, media title, and duration.
+        DownloadResult with path to audio file, media title, and duration.
 
     Raises:
         yt_dlp.utils.DownloadError: If the URL is invalid or download fails.
     """
     output_dir = settings.data_dir / job_id
     output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / "audio.wav"
 
-    # WHY: We extract info first, then download. This lets us capture title
-    # and duration before the (potentially slow) audio conversion step.
     ydl_opts = {
         # WHY: bestaudio selects the highest quality audio-only stream,
         # avoiding unnecessary video data transfer.
         "format": "bestaudio/best",
-        "postprocessors": [
-            {
-                "key": "FFmpegExtractAudio",
-                # WHY: WAV is uncompressed - no lossy re-encoding means
-                # Whisper gets the highest fidelity input possible.
-                "preferredcodec": "wav",
-            }
-        ],
-        # WHY: Use template that yt-dlp will rename to .wav after postprocessing.
+        # WHY: No postprocessor -- faster-whisper decodes any FFmpeg-supported
+        # format natively. Skipping WAV re-encoding saves minutes of CPU time
+        # and ~600MB of disk per hour of audio.
         "outtmpl": str(output_dir / "audio.%(ext)s"),
         # WHY: Suppress yt-dlp console output in worker logs.
         "quiet": True,
@@ -76,5 +68,15 @@ def extract_audio(url: str, job_id: str) -> DownloadResult:
 
     title = info.get("title", "Unknown")
     duration = float(info.get("duration", 0.0))
+
+    # WHY: Without the WAV postprocessor, the file extension depends on what
+    # the source provides (webm, m4a, opus, etc.). We glob for the actual
+    # file instead of hardcoding an extension.
+    audio_files = list(output_dir.glob("audio.*"))
+    if not audio_files:
+        raise FileNotFoundError(
+            f"yt-dlp did not produce an audio file in {output_dir}"
+        )
+    output_path = audio_files[0]
 
     return DownloadResult(path=output_path, title=title, duration=duration)

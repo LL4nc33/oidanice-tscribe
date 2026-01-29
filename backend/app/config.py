@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     app_name: str = "OidaNice TScribe"
     debug: bool = False
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    # WHY: Configurable log level so production runs at INFO but developers
+    # can set TSCRIBE_LOG_LEVEL=DEBUG without code changes.
+    log_level: str = "INFO"
 
     # Database
     # WHY: SQLite for simplicity - single file, no extra service needed.
@@ -40,6 +43,11 @@ class Settings(BaseSettings):
     whisper_device: str = "auto"
     # WHY: int8 quantization cuts VRAM usage ~50% with minimal quality loss.
     whisper_compute_type: str = "int8"
+
+    # Job execution
+    # WHY: RQ defaults to 180s timeout which is too short for large video
+    # transcriptions. 2 hours accommodates long-form content safely.
+    job_timeout_seconds: int = 7200
 
     # Storage
     # WHY: Centralized temp/output directory for easy cleanup and volume mounting.

@@ -6,6 +6,8 @@ CORS middleware is configured from settings so allowed origins can be
 changed per environment without code changes.
 """
 
+import logging
+import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -14,6 +16,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import init_db
 from app.routes import health, jobs
+
+# WHY: Structured logging configured at module level (before any request)
+# so all library and application logs follow a consistent, parseable format.
+# Mirrors the pattern in run_worker.py for uniform log output across services.
+logging.basicConfig(
+    level=getattr(logging, settings.log_level.upper(), logging.INFO),
+    format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+    stream=sys.stdout,
+)
+logger = logging.getLogger("tscribe.api")
 
 
 @asynccontextmanager
@@ -25,8 +37,11 @@ async def lifespan(app: FastAPI):
     tables here so the app works immediately after first deploy without
     manual migration steps.
     """
+    logger.info("Starting %s (debug=%s, log_level=%s)", settings.app_name, settings.debug, settings.log_level)
     await init_db()
+    logger.info("Database initialized")
     yield
+    logger.info("Shutting down")
 
 
 def create_app() -> FastAPI:

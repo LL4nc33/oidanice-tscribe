@@ -6,6 +6,8 @@ download formatted transcript, or clean up old jobs.
 """
 
 import json
+import logging
+import shutil
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Response
@@ -20,6 +22,7 @@ from app.models import Job, JobStatus
 from app.schemas import JobCreate, JobListResponse, JobResponse
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 # WHY: Module-level Redis connection and queue are reused across requests
 # to avoid reconnecting on every call. RQ handles connection pooling internally.
@@ -52,7 +55,7 @@ async def create_job(payload: JobCreate, db: AsyncSession = Depends(get_db)):
     # WHY: Enqueue by string path to top-level module so RQ resolves it
     # reliably. worker_entry.process_job lazy-imports the actual task,
     # keeping the API process free of heavy deps (faster-whisper, yt-dlp).
-    queue.enqueue("worker_entry.process_job", job.id)
+    queue.enqueue("worker_entry.process_job", job.id, job_timeout=settings.job_timeout_seconds)
 
     return job
 
@@ -87,15 +90,28 @@ async def get_job(job_id: str, db: AsyncSession = Depends(get_db)):
 
 @router.delete("/{job_id}", status_code=204)
 async def delete_job(job_id: str, db: AsyncSession = Depends(get_db)):
-    """Remove a job and its data from the database.
+    """Remove a job, its files on disk, and its database record.
 
     WHY: Allows users to clean up jobs they no longer need. Returns 204
     (No Content) per REST convention for successful deletions. Raises 404
     if the job does not exist to prevent silent no-ops that confuse clients.
+    Files are deleted first to avoid orphaned directories on disk.
     """
     job = await db.get(Job, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
+
+    # WHY: Remove associated files before the DB record to prevent orphaned
+    # directories from accumulating on disk. If file deletion fails, we log
+    # a warning but still proceed with DB deletion so the job is not stuck.
+    job_dir = settings.data_dir / job_id
+    if job_dir.is_dir():
+        try:
+            shutil.rmtree(job_dir)
+            logger.info("Deleted job directory: %s", job_dir)
+        except OSError:
+            logger.warning("Failed to delete job directory: %s", job_dir, exc_info=True)
+
     await db.delete(job)
     await db.commit()
     return Response(status_code=204)
@@ -134,8 +150,10 @@ async def download_transcript(
     # dependencies (faster-whisper, etc.) in the API process. Only the
     # lightweight format converters are needed here.
     from app.worker.formats import to_json, to_srt, to_txt, to_vtt
+    from app.worker.transcribe import Segment
 
-    segments = json.loads(job.result_segments_json) if job.result_segments_json else []
+    raw_segments = json.loads(job.result_segments_json) if job.result_segments_json else []
+    segments = [Segment(**s) for s in raw_segments]
 
     # WHY: Content-type mapping ensures browsers and tools handle the
     # downloaded file correctly. text/plain for SRT/VTT is intentional

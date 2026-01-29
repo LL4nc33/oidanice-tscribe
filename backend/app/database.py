@@ -47,7 +47,7 @@ async def get_db() -> AsyncSession:
 
 
 async def init_db():
-    """Create all tables on startup.
+    """Create all tables on startup and migrate schema if needed.
 
     WHY: Auto-create tables at startup so the app works out of the box
     without manual migration steps. For a v0.0.1 this is simpler than
@@ -55,3 +55,29 @@ async def init_db():
     """
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # WHY: SQLAlchemy's create_all() only creates missing tables, not missing
+    # columns. For existing databases we need to add new columns manually.
+    # This is a lightweight alternative to Alembic for simple additions.
+    await _migrate_add_columns()
+
+
+async def _migrate_add_columns():
+    """Add columns that may be missing from existing databases.
+
+    WHY: When we add new nullable columns to models, existing SQLite databases
+    won't have them. We check via PRAGMA and ALTER TABLE to add them safely.
+    This runs on every startup but is a no-op when columns already exist.
+    """
+    import sqlalchemy
+
+    async with engine.begin() as conn:
+        # WHY: PRAGMA table_info returns column metadata for the table.
+        # We check if 'source' column exists before attempting to add it.
+        result = await conn.execute(sqlalchemy.text("PRAGMA table_info(jobs)"))
+        columns = {row[1] for row in result.fetchall()}
+
+        if "source" not in columns:
+            await conn.execute(
+                sqlalchemy.text("ALTER TABLE jobs ADD COLUMN source VARCHAR(20)")
+            )

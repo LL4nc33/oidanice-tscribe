@@ -6,12 +6,14 @@ This means transcriptions complete in minutes instead of tens of minutes,
 especially on CPU where the difference is most noticeable.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from faster_whisper import WhisperModel
 
 from app.config import settings
+from app.worker.shutdown import check_shutdown
 
 # WHY: Module-level cached model instance. Loading a Whisper model takes
 # 5-30 seconds depending on size. By caching at module level, we load once
@@ -64,7 +66,9 @@ def _get_model() -> WhisperModel:
 
 
 def transcribe_audio(
-    audio_path: Path, language: str | None = None
+    audio_path: Path,
+    language: str | None = None,
+    on_segment: Callable[[Segment], None] | None = None,
 ) -> TranscriptionResult:
     """Transcribe an audio file using faster-whisper.
 
@@ -73,9 +77,12 @@ def transcribe_audio(
     and improve accuracy on known-language content.
 
     Args:
-        audio_path: Path to audio file (WAV recommended for best quality).
+        audio_path: Path to audio file (any FFmpeg-supported format).
         language: ISO 639-1 language code (e.g., "en", "de") or None for
                   auto-detection.
+        on_segment: Optional callback invoked after each segment is transcribed.
+                    WHY: Enables the caller (tasks.py) to report real progress
+                    as segments complete, instead of waiting for the full result.
 
     Returns:
         TranscriptionResult with timed segments and detected/specified language.
@@ -94,10 +101,22 @@ def transcribe_audio(
         beam_size=5,
     )
 
-    segments = [
-        Segment(start=seg.start, end=seg.end, text=seg.text.strip())
-        for seg in segments_iter
-    ]
+    # WHY: Iterate one segment at a time (instead of a list comprehension)
+    # so the on_segment callback can fire between segments. This is what
+    # enables real-time progress tracking during transcription.
+    # Also checks for SIGTERM between segments so Docker shutdown doesn't
+    # leave jobs stuck in TRANSCRIBING status forever.
+    segments: list[Segment] = []
+    for seg in segments_iter:
+        # WHY: Check between segments (not mid-computation) because this is
+        # the natural yield point. Whisper processes one segment at a time,
+        # so worst case we finish one more segment (~5-30s) before exiting.
+        check_shutdown()
+
+        segment = Segment(start=seg.start, end=seg.end, text=seg.text.strip())
+        segments.append(segment)
+        if on_segment is not None:
+            on_segment(segment)
 
     detected_language = info.language if info else (language or "unknown")
 

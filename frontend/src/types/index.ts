@@ -27,6 +27,8 @@ export interface Job {
   progress: number
   result_text: string | null
   error: string | null
+  /** WHY: Tracks whether transcript came from subtitles (fast) or whisper (slow). */
+  source: string | null
   created_at: string
   completed_at: string | null
 }
@@ -39,6 +41,8 @@ export interface JobListItem {
   status: JobStatus
   title: string | null
   progress: number
+  /** WHY: Tracks whether transcript came from subtitles (fast) or whisper (slow). */
+  source: string | null
   created_at: string
   completed_at: string | null
 }
