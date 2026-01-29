@@ -19,3 +19,9 @@ createRoot(document.getElementById('root')!).render(
     </ErrorBoundary>
   </StrictMode>,
 )
+
+// WHY: Register service worker for PWA install support and app-shell caching.
+// Only in production to avoid caching issues during development.
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  navigator.serviceWorker.register('/sw.js')
+}

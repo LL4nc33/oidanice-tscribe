@@ -12,6 +12,7 @@ Usage:
 """
 
 import logging
+import sqlite3
 import sys
 
 from redis import Redis
@@ -62,6 +63,20 @@ def main() -> None:
     if redis_conn.exists(stale_key):
         logger.warning("Cleaning up stale worker key: %s", stale_key)
         redis_conn.delete(stale_key)
+
+    # WHY: If the worker was killed (OOM, SIGKILL, power loss), jobs stuck in
+    # DOWNLOADING or TRANSCRIBING status will never complete. Mark them as FAILED
+    # on startup so the frontend shows the correct state and users can retry.
+    db_path = settings.database_url.split("///", 1)[1]
+    conn = sqlite3.connect(db_path)
+    orphaned = conn.execute(
+        "UPDATE jobs SET status = 'failed', error = 'Worker was restarted during processing.'"
+        " WHERE status IN ('downloading', 'transcribing')"
+    )
+    if orphaned.rowcount > 0:
+        logger.warning("Marked %d orphaned job(s) as failed", orphaned.rowcount)
+    conn.commit()
+    conn.close()
 
     worker.work(with_scheduler=False)
 

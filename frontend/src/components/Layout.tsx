@@ -8,6 +8,7 @@
 
 import { ReactNode } from 'react'
 import { useDarkMode } from '../hooks/useDarkMode'
+import { InstallPrompt } from './InstallPrompt'
 
 interface LayoutProps {
   children: ReactNode
@@ -41,6 +42,8 @@ export function Layout({ children }: LayoutProps) {
           {isDark ? '☀' : '☽'}
         </button>
       </header>
+
+      <InstallPrompt />
 
       {/* WHY: flex-1 ensures the main content stretches to fill available space. */}
       <main className="flex-1 px-6 py-8 max-w-4xl w-full mx-auto">

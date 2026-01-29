@@ -9,10 +9,15 @@ services:
     image: redis:7-alpine
     # WHY alpine variant: ~30MB vs ~130MB for full image. Redis needs no
     # extra OS packages, so alpine is ideal.
+    # WHY requirepass: Prevents unauthorized cross-container access to Redis.
+    # Simple password is fine for self-hosted private network deployment.
+    command: redis-server --requirepass ${REDIS_PASSWORD:-tscribe-redis-secret}
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-tscribe-redis-secret}
     # WHY healthcheck: Ensures dependent services only start when Redis
     # is actually accepting connections, not just when the container starts.
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "tscribe-redis-secret", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -29,6 +34,8 @@ services:
         condition: service_healthy
     env_file:
       - .env
+    environment:
+      - TSCRIBE_REDIS_URL=redis://:${REDIS_PASSWORD:-tscribe-redis-secret}@redis:6379/0
     # WHY shared data volume: SQLite database and downloaded audio files
     # must be accessible by both api (creates jobs, serves results) and
     # worker (downloads audio, writes transcriptions).
@@ -61,6 +68,8 @@ services:
         condition: service_healthy
     env_file:
       - .env
+    environment:
+      - TSCRIBE_REDIS_URL=redis://:${REDIS_PASSWORD:-tscribe-redis-secret}@redis:6379/0
     volumes:
       - ./data:/data
     # WHY healthcheck: Verifies the RQ worker process is alive and Redis
@@ -93,14 +102,14 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3001:3000"
+      - "3001:8080"
     depends_on:
       api:
         condition: service_healthy
     # WHY healthcheck: Detects when nginx is unresponsive. Uses wget
     # because it is available in nginx:alpine by default (curl is not).
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8080/"]
       interval: 15s
       timeout: 5s
       retries: 3

@@ -5,10 +5,13 @@ maps to a clear user action: submit a URL, check status, view result,
 download formatted transcript, or clean up old jobs.
 """
 
+import ipaddress
 import json
 import logging
 import shutil
+import socket
 import uuid
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from redis import Redis
@@ -23,6 +26,35 @@ from app.schemas import JobCreate, JobListResponse, JobResponse
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+
+def _validate_url_not_private(url: str) -> None:
+    """Block URLs that resolve to private/reserved IP addresses.
+
+    WHY: Prevents SSRF attacks where an attacker submits a URL pointing to
+    internal services (e.g. http://169.254.169.254/metadata for cloud
+    credentials, or http://localhost:6379/ to probe Redis). We resolve the
+    hostname and reject any IP in private, loopback, link-local, or reserved
+    ranges before the job reaches the worker.
+    """
+    parsed = urlparse(url)
+    hostname = parsed.hostname
+    if not hostname:
+        raise HTTPException(status_code=400, detail="URL has no hostname")
+
+    try:
+        addrinfo = socket.getaddrinfo(hostname, None)
+    except socket.gaierror:
+        raise HTTPException(status_code=400, detail="Could not resolve hostname")
+
+    for family, _, _, _, sockaddr in addrinfo:
+        ip = ipaddress.ip_address(sockaddr[0])
+        if ip.is_private or ip.is_reserved or ip.is_loopback or ip.is_link_local:
+            logger.warning("SSRF blocked: %s resolved to private IP %s", url, ip)
+            raise HTTPException(
+                status_code=400,
+                detail="URL resolves to a private network address",
+            )
 
 # WHY: Module-level Redis connection and queue are reused across requests
 # to avoid reconnecting on every call. RQ handles connection pooling internally.
@@ -39,6 +71,8 @@ async def create_job(payload: JobCreate, db: AsyncSession = Depends(get_db)):
     in the RQ worker to keep API response times fast (<100ms).
     The UUID is generated server-side to guarantee uniqueness.
     """
+    _validate_url_not_private(str(payload.url))
+
     job_id = str(uuid.uuid4())
 
     job = Job(
@@ -75,36 +109,38 @@ async def list_jobs(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{job_id}", response_model=JobResponse)
-async def get_job(job_id: str, db: AsyncSession = Depends(get_db)):
+async def get_job(job_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """Fetch a single job with full details including transcript text.
 
     WHY: Separating the detail view from the list view allows including
     the potentially large result_text only when the user actually opens
     a specific job, saving bandwidth on the list page.
+    The job_id is typed as uuid.UUID so FastAPI returns 422 for malformed IDs.
     """
-    job = await db.get(Job, job_id)
+    job = await db.get(Job, str(job_id))
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
 
 
 @router.delete("/{job_id}", status_code=204)
-async def delete_job(job_id: str, db: AsyncSession = Depends(get_db)):
+async def delete_job(job_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """Remove a job, its files on disk, and its database record.
 
     WHY: Allows users to clean up jobs they no longer need. Returns 204
     (No Content) per REST convention for successful deletions. Raises 404
     if the job does not exist to prevent silent no-ops that confuse clients.
     Files are deleted first to avoid orphaned directories on disk.
+    The job_id is typed as uuid.UUID so FastAPI returns 422 for malformed IDs.
     """
-    job = await db.get(Job, job_id)
+    job = await db.get(Job, str(job_id))
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
     # WHY: Remove associated files before the DB record to prevent orphaned
     # directories from accumulating on disk. If file deletion fails, we log
     # a warning but still proceed with DB deletion so the job is not stuck.
-    job_dir = settings.data_dir / job_id
+    job_dir = settings.data_dir / str(job_id)
     if job_dir.is_dir():
         try:
             shutil.rmtree(job_dir)
@@ -119,7 +155,7 @@ async def delete_job(job_id: str, db: AsyncSession = Depends(get_db)):
 
 @router.get("/{job_id}/download/{fmt}")
 async def download_transcript(
-    job_id: str, fmt: str, db: AsyncSession = Depends(get_db)
+    job_id: uuid.UUID, fmt: str, db: AsyncSession = Depends(get_db)
 ):
     """Download the transcript in the requested format (srt, vtt, txt, json).
 
@@ -128,6 +164,7 @@ async def download_transcript(
     as JSON; this endpoint converts to the requested output format at
     download time. This keeps storage minimal and supports adding new
     formats without re-processing.
+    The job_id is typed as uuid.UUID so FastAPI returns 422 for malformed IDs.
     """
     valid_formats = {"srt", "vtt", "txt", "json"}
     if fmt not in valid_formats:
@@ -136,7 +173,7 @@ async def download_transcript(
             detail=f"Invalid format '{fmt}'. Must be one of: {', '.join(sorted(valid_formats))}",
         )
 
-    job = await db.get(Job, job_id)
+    job = await db.get(Job, str(job_id))
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 

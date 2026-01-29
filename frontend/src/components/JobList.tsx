@@ -325,6 +325,7 @@ function FilterChip({
   return (
     <button
       onClick={onClick}
+      title={label}
       className="font-mono text-xs px-2.5 py-1 flex items-center gap-1.5 transition-colors"
       style={{
         border: '1px solid var(--border)',
@@ -333,7 +334,7 @@ function FilterChip({
       }}
     >
       {icon}
-      {label}
+      <span className={icon && !active ? 'hidden sm:inline' : ''}>{label}</span>
     </button>
   )
 }

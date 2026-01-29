@@ -19,7 +19,12 @@ class Settings(BaseSettings):
     # API
     app_name: str = "OidaNice TScribe"
     debug: bool = False
-    cors_origins: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+    # WHY wildcard default: In production, nginx proxies /api/ requests to
+    # the backend (same-origin), so CORS is not triggered. For development
+    # (Vite on :5173) and tunnel setups (any external domain), wildcard is safe
+    # because the API has no cookie-based auth. Override via TSCRIBE_CORS_ORIGINS
+    # for stricter control (e.g., "https://tscribe.example.com,http://localhost:5173").
+    cors_origins: list[str] = ["*"]
     # WHY: Configurable log level so production runs at INFO but developers
     # can set TSCRIBE_LOG_LEVEL=DEBUG without code changes.
     log_level: str = "INFO"
@@ -32,7 +37,7 @@ class Settings(BaseSettings):
     # Redis
     # WHY: Redis as job queue backend because RQ (Redis Queue) is simpler
     # than Celery for our use case (no complex routing/scheduling needed).
-    redis_url: str = "redis://redis:6379/0"
+    redis_url: str = "redis://:tscribe-redis-secret@redis:6379/0"
 
     # Worker
     # WHY: faster-whisper model size. "base" balances speed and accuracy

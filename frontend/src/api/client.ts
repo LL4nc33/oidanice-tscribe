@@ -25,7 +25,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 /** WHY: Creates a transcription job from a URL. Returns the full job
  *  object so the frontend can immediately show status. */
 export async function createJob(data: CreateJobRequest): Promise<Job> {
-  const response = await fetch(`${BASE_URL}/jobs`, {
+  const response = await fetch(`${BASE_URL}/jobs/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -43,7 +43,7 @@ export async function getJob(id: string): Promise<Job> {
 /** WHY: Fetches the job list without result_text for lightweight rendering.
  *  Used for the sidebar/list of recent jobs. */
 export async function listJobs(): Promise<JobListItem[]> {
-  const response = await fetch(`${BASE_URL}/jobs`)
+  const response = await fetch(`${BASE_URL}/jobs/`)
   return handleResponse<JobListItem[]>(response)
 }
 
