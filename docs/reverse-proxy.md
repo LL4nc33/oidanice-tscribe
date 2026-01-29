@@ -7,7 +7,7 @@ TScribe works behind any reverse proxy out of the box. Proxy headers, relative A
 ## Cloudflare Tunnel (simplest)
 
 ```bash
-cloudflared tunnel --url http://localhost:3001
+cloudflared tunnel --url http://localhost:58008
 ```
 
 ## Custom Domain with Restricted CORS
@@ -25,7 +25,7 @@ server {
     server_name tscribe.yourdomain.com;
 
     location / {
-        proxy_pass http://localhost:3001;
+        proxy_pass http://localhost:58008;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

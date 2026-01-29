@@ -48,7 +48,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Open [http://localhost:3001](http://localhost:3001) and paste a video URL.
+Open [http://localhost:58008](http://localhost:58008) and paste a video URL.
 
 ---
 
