@@ -78,7 +78,7 @@ export function Layout({ children }: LayoutProps) {
           OidaNice
         </a>
         <span style={{ opacity: 0.4 }}>·</span>
-        <span>v0.0.4</span>
+        <span>v{__APP_VERSION__}</span>
       </footer>
     </div>
   )

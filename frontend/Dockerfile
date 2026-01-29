@@ -16,7 +16,10 @@ RUN npm ci
 
 # Copy source and build
 COPY . .
-RUN npm run build
+# WHY: VERSION file from repo root is copied by docker compose build context.
+# If missing, vite falls back to 'dev'. See vite.config.ts loadVersion().
+ARG APP_VERSION=dev
+RUN echo "$APP_VERSION" > VERSION && npm run build
 
 # --- Stage 2: Production ---
 # WHY nginxinc/nginx-unprivileged:alpine: Same as nginx:alpine but runs as

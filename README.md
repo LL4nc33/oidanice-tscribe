@@ -63,6 +63,7 @@ Open [http://localhost:58008](http://localhost:58008) and paste a video URL.
 | [API Reference](docs/api-reference.md) | REST endpoints and curl examples |
 | [Development](docs/development.md) | Local backend/frontend setup and tests |
 | [System Requirements](docs/system-requirements.md) | Minimum, recommended, and optimal hardware |
+| [Roadmap](ROADMAP.md) | Planned features and future ideas |
 
 ---
 
