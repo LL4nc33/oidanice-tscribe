@@ -6,28 +6,28 @@ What's planned and what might come next.
 
 ---
 
-## v0.1.0 — API & Integrations
+## v0.0.5 — API & Integrations
 
 - [ ] Synchronous `/api/transcribe` endpoint for LLM tool-use (OidaNiceGPT, OpenWebUI)
 - [ ] API key authentication (optional, for public deployments)
 - [ ] Webhook notifications on job completion
 - [ ] Batch URL submission (multiple URLs in one request)
 
-## v0.2.0 — Transcription Quality
+## v0.0.6 — Transcription Quality
 
 - [ ] Language detection and selection UI
 - [ ] Speaker diarization (who said what)
 - [ ] Whisper model selection per job (tiny → large-v3)
 - [ ] Word-level timestamps for karaoke-style subtitles
 
-## v0.3.0 — User Experience
+## v0.0.7 — User Experience
 
 - [ ] Job history with search and filters
 - [ ] Inline transcript editor (correct mistakes before export)
 - [ ] Audio/video player with synced transcript highlighting
 - [ ] Drag-and-drop local file upload (not just URLs)
 
-## v0.4.0 — Multi-User & Storage
+## v0.0.8 — Multi-User & Storage
 
 - [ ] User accounts with optional authentication
 - [ ] Persistent transcript library per user
