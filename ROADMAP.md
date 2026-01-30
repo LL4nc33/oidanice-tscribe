@@ -42,7 +42,7 @@ What's planned and what might come next.
 - [ ] Custom vocabulary / hotwords for domain-specific terms
 - [ ] Podcast RSS feed auto-transcription
 - [ ] Browser extension (right-click → transcribe)
-- [ ] Mobile app (React Native, sharing the kindle-ui design system)
+- [ ] Mobile app (React Native, sharing the ink-ui design system)
 - [ ] Kubernetes Helm chart
 - [ ] Prometheus metrics endpoint
 

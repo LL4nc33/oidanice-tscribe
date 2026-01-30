@@ -1,10 +1,13 @@
 {
-  "name": "@oidanice/kindle-ui",
+  "name": "@oidanice/ink-ui",
   "version": "0.1.0",
   "description": "Kindle-inspired monochrome design system for Tailwind CSS",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "sideEffects": [
+    "*.css"
+  ],
   "files": [
     "dist",
     "preset.js",
@@ -49,6 +52,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/LL4nc33/oidanice-tscribe",
-    "directory": "packages/kindle-ui"
+    "directory": "packages/ink-ui"
   }
 }

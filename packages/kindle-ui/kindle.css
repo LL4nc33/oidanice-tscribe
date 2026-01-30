@@ -20,6 +20,8 @@
   --border: #000000;
   --bg-secondary: #f5f5f5;
   --text-secondary: #333333;
+  --accent: var(--text);
+  --accent-contrast: var(--bg);
 }
 
 .dark {
@@ -105,4 +107,101 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: var(--text-secondary);
+}
+
+/* ----------------------------------------------------------------
+ * Form Elements: .input-kindle, .select-kindle, .textarea-kindle
+ * WHY: Consistent form styling that follows the monochrome theme.
+ * All form elements share the same base: transparent background,
+ * 1px border, mono font, and accent-colored focus ring.
+ * ---------------------------------------------------------------- */
+.input-kindle,
+.select-kindle,
+.textarea-kindle {
+  background-color: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  width: 100%;
+  transition: border-color 0.15s, outline-color 0.15s;
+}
+
+.input-kindle:focus,
+.select-kindle:focus,
+.textarea-kindle:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-color: var(--accent);
+}
+
+.input-kindle::placeholder,
+.textarea-kindle::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.input-kindle:disabled,
+.select-kindle:disabled,
+.textarea-kindle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.select-kindle {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23000' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2rem;
+}
+
+.dark .select-kindle,
+[data-theme="dark"] .select-kindle {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+}
+
+.textarea-kindle {
+  resize: vertical;
+  min-height: 5rem;
+}
+
+/* ----------------------------------------------------------------
+ * Progress: .progress-kindle
+ * WHY: A flat progress bar using accent color. No rounded corners,
+ * consistent with the e-reader flat aesthetic.
+ * ---------------------------------------------------------------- */
+.progress-kindle {
+  width: 100%;
+  height: 4px;
+  background-color: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.progress-kindle > .progress-kindle-bar {
+  height: 100%;
+  background-color: var(--accent);
+  transition: width 0.3s ease;
+}
+
+/* Indeterminate state */
+@keyframes progress-indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.progress-kindle > .progress-kindle-bar[data-indeterminate] {
+  width: 40%;
+  animation: progress-indeterminate 1.5s ease-in-out infinite;
+}
+
+/* ----------------------------------------------------------------
+ * Divider: .divider-kindle
+ * WHY: Thin 1px horizontal rule matching the header/footer borders.
+ * ---------------------------------------------------------------- */
+.divider-kindle {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1rem 0;
 }

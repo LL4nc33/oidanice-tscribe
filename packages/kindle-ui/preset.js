@@ -6,7 +6,7 @@
  * color palette, font stacks, and utility classes without copying config.
  *
  * Usage in tailwind.config.js:
- *   const kindlePreset = require('@oidanice/kindle-ui/preset')
+ *   const kindlePreset = require('@oidanice/ink-ui/preset')
  *   module.exports = { presets: [kindlePreset] }
  *
  * "Intentionally minimal -- like a Kindle, not like a prototype."
@@ -38,13 +38,20 @@ module.exports = {
       backgroundColor: {
         primary: 'var(--bg)',
         secondary: 'var(--bg-secondary)',
+        accent: 'var(--accent)',
       },
       textColor: {
         primary: 'var(--text)',
         secondary: 'var(--text-secondary)',
+        accent: 'var(--accent)',
+        'accent-contrast': 'var(--accent-contrast)',
       },
       borderColor: {
         primary: 'var(--border)',
+        accent: 'var(--accent)',
+      },
+      outlineColor: {
+        accent: 'var(--accent)',
       },
     },
   },
@@ -76,6 +83,36 @@ module.exports = {
         },
         '.status-active': {
           animation: 'pulse-opacity 2s ease-in-out infinite',
+        },
+        '.input-kindle, .select-kindle, .textarea-kindle': {
+          backgroundColor: 'var(--bg)',
+          color: 'var(--text)',
+          border: '1px solid var(--border)',
+          fontFamily: "'Courier New', Courier, monospace",
+          fontSize: '0.875rem',
+          padding: '0.5rem 0.75rem',
+          width: '100%',
+          transition: 'border-color 0.15s, outline-color 0.15s',
+          '&:focus': {
+            outline: '2px solid var(--accent)',
+            outlineOffset: '2px',
+            borderColor: 'var(--accent)',
+          },
+          '&:disabled': {
+            opacity: '0.4',
+            cursor: 'not-allowed',
+          },
+        },
+        '.progress-kindle': {
+          width: '100%',
+          height: '4px',
+          backgroundColor: 'var(--bg-secondary)',
+          overflow: 'hidden',
+        },
+        '.divider-kindle': {
+          border: 'none',
+          borderTop: '1px solid var(--border)',
+          margin: '1rem 0',
         },
       })
     }),

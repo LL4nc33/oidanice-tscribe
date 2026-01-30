@@ -25,7 +25,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export interface InstallPromptProps {
-  /** localStorage key for dismissed state. Defaults to 'kindle-ui-install-dismissed'. */
+  /** localStorage key for dismissed state. Defaults to 'ink-ui-install-dismissed'. */
   dismissedKey?: string
 }
 
@@ -67,7 +67,7 @@ function detectBrowser(): 'safari' | 'chrome' | 'firefox' | 'samsung' | 'other' 
 }
 
 export function InstallPrompt({
-  dismissedKey = 'kindle-ui-install-dismissed',
+  dismissedKey = 'ink-ui-install-dismissed',
 }: InstallPromptProps = {}) {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null)

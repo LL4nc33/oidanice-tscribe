@@ -8,7 +8,7 @@
  * The hook manages both the `dark` class on `<html>` (for Tailwind's
  * dark: variants) and `data-theme` attribute (for non-Tailwind consumers).
  *
- * @param storageKey - localStorage key for persistence. Defaults to 'kindle-ui-dark-mode'.
+ * @param storageKey - localStorage key for persistence. Defaults to 'ink-ui-dark-mode'.
  * @returns Tuple of [isDark, toggleDark]
  *
  * @example
@@ -39,7 +39,7 @@ function getInitialMode(storageKey: string): boolean {
 }
 
 export function useDarkMode(
-  storageKey: string = 'kindle-ui-dark-mode'
+  storageKey: string = 'ink-ui-dark-mode'
 ): [boolean, () => void] {
   const [isDark, setIsDark] = useState(() => getInitialMode(storageKey))
 

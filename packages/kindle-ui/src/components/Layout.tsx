@@ -1,5 +1,5 @@
 /**
- * Page layout with header, main content area, and footer.
+ * Page layout with header, optional sidebar, main content area, and footer.
  *
  * WHY: Consistent page structure with Kindle/E-Reader aesthetic.
  * Header contains the brand title in serif font. Footer provides credits.
@@ -28,14 +28,22 @@ export interface LayoutProps {
   children: ReactNode
   /** Brand title displayed in the header. */
   title?: string
+  /** Custom element rendered on the left side of the header (alternative to title). */
+  headerLeft?: ReactNode
   /** Element rendered on the right side of the header (e.g., DarkModeToggle). */
   headerRight?: ReactNode
   /** Content rendered between header and main (e.g., InstallPrompt). */
   banner?: ReactNode
+  /** Optional sidebar content. */
+  sidebar?: ReactNode
+  /** Which side the sidebar appears on. Defaults to 'left'. */
+  sidebarPosition?: 'left' | 'right'
   /** Footer content. If omitted, no footer is rendered. */
   footer?: ReactNode
   /** Max width class for the main content area. Defaults to 'max-w-4xl'. */
   maxWidth?: string
+  /** Additional className for the root element. */
+  className?: string
 }
 
 /** WHY: Layout enforces the chrome around app content. The min-h-screen +
@@ -44,14 +52,24 @@ export interface LayoutProps {
 export function Layout({
   children,
   title,
+  headerLeft,
   headerRight,
   banner,
+  sidebar,
+  sidebarPosition = 'left',
   footer,
   maxWidth = 'max-w-4xl',
+  className = '',
 }: LayoutProps) {
+  const mainContent = (
+    <main className={`flex-1 px-6 py-8 ${maxWidth} w-full mx-auto`}>
+      {children}
+    </main>
+  )
+
   return (
     <div
-      className="min-h-screen flex flex-col"
+      className={`min-h-screen flex flex-col ${className}`}
       style={{ backgroundColor: 'var(--bg)', color: 'var(--text)' }}
     >
       {/* WHY: Header uses a thin bottom border for clean Kindle-style separation. */}
@@ -59,20 +77,36 @@ export function Layout({
         className="px-6 py-6 flex items-center justify-between"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
-        {title && (
-          <h1 className="font-serif text-2xl font-light tracking-wider leading-tight">
-            {title}
-          </h1>
-        )}
+        <div className="flex items-center gap-4">
+          {headerLeft}
+          {title && (
+            <h1 className="font-serif text-2xl font-light tracking-wider leading-tight">
+              {title}
+            </h1>
+          )}
+        </div>
         {headerRight}
       </header>
 
       {banner}
 
-      {/* WHY: flex-1 ensures the main content stretches to fill available space. */}
-      <main className={`flex-1 px-6 py-8 ${maxWidth} w-full mx-auto`}>
-        {children}
-      </main>
+      {/* WHY: flex-1 ensures the content area stretches to fill available space. */}
+      {sidebar ? (
+        <div className={`flex-1 flex ${sidebarPosition === 'right' ? 'flex-row' : 'flex-row-reverse'}`}>
+          {mainContent}
+          <aside
+            className="py-8 px-4 shrink-0"
+            style={{
+              borderLeft: sidebarPosition === 'right' ? '1px solid var(--border)' : undefined,
+              borderRight: sidebarPosition === 'left' ? '1px solid var(--border)' : undefined,
+            }}
+          >
+            {sidebar}
+          </aside>
+        </div>
+      ) : (
+        mainContent
+      )}
 
       {/* WHY: Footer with thin top border mirrors the header for symmetry. */}
       {footer && (
